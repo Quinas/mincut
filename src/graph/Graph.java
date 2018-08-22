@@ -37,7 +37,7 @@ public class Graph {
     return graph;
   }
 
-  public void addEdge(int u, int v, double weight) {
+  private void addEdge(int u, int v, double weight) {
     nodes.get(u).addEdge(nodes.get(v), weight);
   }
 
