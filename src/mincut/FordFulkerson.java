@@ -56,12 +56,33 @@ public class FordFulkerson implements IMinCut {
     return maxFlow;
   }
 
+  private void dfs(Graph graph, int v, int color, int[] vis) {
+    vis[v] = color;
+    for (int i = 0; i < graph.size(); ++i) {
+      if (graph.getAdjMatrix()[v][i] > 0 && vis[i] == 0) {
+        dfs(graph, i, color, vis);
+      }
+    }
+  }
+
   @Override
   public int minCut(Graph graph) {
+    int[] vis = new int[graph.size()];
+    int color = 1;
+
+    for (int i = 0; i < graph.size(); ++i) {
+      if (vis[i] == 0) {
+        dfs(graph, i, color, vis);
+        color++;
+      }
+    }
+
     int ans = Integer.MAX_VALUE;
     for (int i = 0; i < graph.size(); ++i) {
       for (int j = i + 1; j < graph.size(); ++j) {
-        ans = Math.min(ans, minCut(graph, i, j));
+        if (vis[i] == vis[j]) {
+          ans = Math.min(ans, minCut(graph, i, j));
+        }
       }
     }
     return ans;
