@@ -17,7 +17,7 @@ public class IMinCutTest {
 
   List<IMinCut> mincut;
   List<Graph> graphs;
-  List<Double> answer;
+  List<Integer> answer;
 
   @Before
   public void setUp() throws Exception {
@@ -31,21 +31,21 @@ public class IMinCutTest {
 
     graphs.add(new Graph(2));
     graphs.get(0).addEdge(0, 1);
-    answer.add(1.0);
+    answer.add(1);
 
     graphs.add(new Graph(4));
     graphs.get(1).addEdge(0, 1);
     graphs.get(1).addEdge(0, 2);
     graphs.get(1).addEdge(1, 3);
     graphs.get(1).addEdge(1, 2);
-    answer.add(1.0);
+    answer.add(1);
   }
 
   @Test
   public void minCut() {
     for (IMinCut alg : mincut) {
       for (int i = 0; i < graphs.size(); ++i) {
-        assertEquals(answer.get(i), alg.minCut(graphs.get(i)));
+        assertEquals(answer.get(i).intValue(), alg.minCut(graphs.get(i)));
       }
     }
   }

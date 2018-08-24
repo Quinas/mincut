@@ -1,25 +1,19 @@
 package graph;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class Graph {
-  private List<Node> nodes;
+  private int[][] adjMatrix;
 
   public Graph(int n) {
-    nodes = new ArrayList<>();
-    for (int i = 0; i < n; ++i) {
-      nodes.add(new Node(i));
-    }
+    adjMatrix = new int[n][n];
   }
 
   public Graph(Graph graph) {
-    this(graph.size());
-    for (Node node : graph.nodes) {
-      for (Edge edge : node.getAdj()) {
-        addEdge(edge.getFrom().index(), edge.getTo().index(), edge.getWeight());
-      }
+    this(graph.adjMatrix.length);
+    int n = graph.adjMatrix.length;
+    for (int i = 0; i < n; ++i) {
+      System.arraycopy(graph.adjMatrix[i], 0, adjMatrix[i], 0, n);
     }
   }
 
@@ -37,8 +31,8 @@ public class Graph {
     return graph;
   }
 
-  private void addEdge(int u, int v, double weight) {
-    nodes.get(u).addEdge(nodes.get(v), weight);
+  private void addEdge(int u, int v, int weight) {
+    adjMatrix[u][v] += weight;
   }
 
   public void addEdge(int u, int v) {
@@ -46,15 +40,11 @@ public class Graph {
     addEdge(v, u, 1);
   }
 
-  public Node get(int v) {
-    return nodes.get(v);
-  }
-
   public int size() {
-    return nodes.size();
+    return adjMatrix.length;
   }
 
-  public List<Node> getNodes() {
-    return nodes;
+  public int[][] getAdjMatrix() {
+    return adjMatrix;
   }
 }

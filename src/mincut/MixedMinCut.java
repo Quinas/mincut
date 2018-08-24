@@ -15,8 +15,8 @@ public class MixedMinCut implements IMinCut {
   }
 
   @Override
-  public double minCut(Graph graph) {
-    double ans = Double.MAX_VALUE;
+  public int minCut(Graph graph) {
+    int ans = Integer.MAX_VALUE;
 
     for (int i = 0; i < k; ++i) {
       Graph nGraph = karger.algorithm(graph);

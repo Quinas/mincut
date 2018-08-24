@@ -1,29 +1,18 @@
 package graph;
 
 public class Edge {
-    private Node from;
-    private Node to;
-    private double weight;
+  private int u, v;
 
-    public Edge(Node from, Node to, double weight) {
-        this.from = from;
-        this.to = to;
-        this.weight = weight;
-    }
+  public Edge(int u, int v) {
+    this.u = u;
+    this.v = v;
+  }
 
-    public Node getFrom() {
-        return from;
-    }
+  public int getU() {
+    return u;
+  }
 
-    public Node getTo() {
-        return to;
-    }
-
-    public double getWeight() {
-        return weight;
-    }
-
-    public void setWeight(double weight) {
-        this.weight = weight;
-    }
+  public int getV() {
+    return v;
+  }
 }

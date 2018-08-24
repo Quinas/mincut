@@ -2,7 +2,6 @@ package mincut;
 
 import graph.Edge;
 import graph.Graph;
-import graph.Node;
 
 import java.util.Random;
 
@@ -21,66 +20,81 @@ public class Karger implements IMinCut {
   }
 
   @Override
-  public double minCut(Graph graph) {
-    double ans = Double.MAX_VALUE;
+  public int minCut(Graph graph) {
+    int ans = Integer.MAX_VALUE;
     for (int i = 0; i < k; ++i) {
       Graph nGraph = algorithm(graph);
 
-      double cur = 0.0;
+      int cur = 0;
 
-      for (Node node : nGraph.getNodes()) {
-        for (Edge edge : node.getAdj()) {
-          cur += edge.getWeight();
+      for (int u = 0; u < graph.size(); ++u) {
+        for (int v = u + 1; v < graph.size(); ++v) {
+          cur += nGraph.getAdjMatrix()[u][v];
         }
       }
 
       ans = Math.min(ans, cur);
     }
-    return ans / 2;
+    return ans;
   }
 
-  private void merge(Graph graph, Edge edge) {
-    Node u = edge.getFrom();
-    Node v = edge.getTo();
+  private int merge(Graph graph, Edge edge, int[] numEdgesRow) {
+    int u = edge.getU();
+    int v = edge.getV();
+    int merged = graph.getAdjMatrix()[u][v];
+    numEdgesRow[u] -= merged;
+    numEdgesRow[v] -= merged;
+    graph.getAdjMatrix()[u][v] = 0;
+    graph.getAdjMatrix()[v][u] = 0;
+    for (int i = 0; i < graph.size(); ++i) {
+      graph.getAdjMatrix()[u][i] += graph.getAdjMatrix()[v][i];
+      graph.getAdjMatrix()[i][u] += graph.getAdjMatrix()[i][v];
 
-    u.getAdj().removeAll(u.getEdges(v));
-
-    for (Edge e : v.getAdj()) {
-      if (e.getTo() == u) {
-        continue;
-      }
-      graph.addEdge(u.index(), e.getTo().index());
-      e.getTo().removeEdge(v, e.getWeight());
+      graph.getAdjMatrix()[v][i] = 0;
+      graph.getAdjMatrix()[i][v] = 0;
     }
-
-    v.getAdj().clear();
+    return merged;
   }
 
   public Graph algorithm(Graph graph) {
     Graph nGraph = new Graph(graph);
+    int n = graph.size();
+    int[] numEdgesRow = new int[n];
 
-    for (int i = 0; i < nGraph.size() - minNodes; ++i) {
-      Edge edge = randomEdge(nGraph);
-      merge(nGraph, edge);
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        numEdgesRow[i] += graph.getAdjMatrix()[i][j];
+      }
+    }
+
+    for (int i = 0; i < n - minNodes; ++i) {
+      Edge edge = randomEdge(nGraph, numEdgesRow);
+      merge(nGraph, edge, numEdgesRow);
     }
 
     return nGraph;
   }
 
-  private Edge randomEdge(Graph graph) {
+  private Edge randomEdge(Graph graph, int[] numEdgesRow) {
     int total = 0;
+    int n = graph.size();
 
-    for (Node node : graph.getNodes()) {
-      total += node.getAdj().size();
+    for (int i = 0; i < n; ++i) {
+      total += numEdgesRow[i];
     }
 
     int r = new Random().nextInt(total);
 
-    for (Node node : graph.getNodes()) {
-      if (r < node.getAdj().size()) {
-        return node.getAdj().get(r);
+    for (int i = 0; i < n; ++i) {
+      if (r < numEdgesRow[i]) {
+        for (int j = 0; j < n; ++j) {
+          if (r < graph.getAdjMatrix()[i][j]) {
+            return new Edge(i, j);
+          }
+          r -= graph.getAdjMatrix()[i][j];
+        }
       }
-      r -= node.getAdj().size();
+      r -= numEdgesRow[i];
     }
     return null;
   }
