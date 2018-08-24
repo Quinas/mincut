@@ -4,12 +4,12 @@ import graph.Graph;
 import mincut.FordFulkerson;
 import mincut.IMinCut;
 import mincut.Karger;
-import mincut.MixedMinCut;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -27,7 +27,6 @@ public class IMinCutTest {
 
     mincut.add(new FordFulkerson());
     mincut.add(new Karger(100));
-    mincut.add(new MixedMinCut(100, 5));
 
     graphs.add(new Graph(2));
     graphs.get(0).addEdge(0, 1);
@@ -46,6 +45,18 @@ public class IMinCutTest {
     for (IMinCut alg : mincut) {
       for (int i = 0; i < graphs.size(); ++i) {
         assertEquals(answer.get(i).intValue(), alg.minCut(graphs.get(i)));
+      }
+    }
+  }
+
+  @Test
+  public void randomMinCut() {
+    for (int i = 0; i < 100; ++i) {
+      double r = new Random().nextDouble();
+      Graph graph = Graph.randomGraph(20, r);
+      int ans = new FordFulkerson().minCut(graph);
+      for (IMinCut alg : mincut) {
+        assertEquals(ans, alg.minCut(graph));
       }
     }
   }

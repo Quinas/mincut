@@ -38,22 +38,24 @@ public class Karger implements IMinCut {
     return ans;
   }
 
-  private int merge(Graph graph, Edge edge, int[] numEdgesRow) {
+  private void merge(Graph graph, Edge edge, int[] numEdgesRow) {
     int u = edge.getU();
     int v = edge.getV();
     int merged = graph.getAdjMatrix()[u][v];
+
     numEdgesRow[u] -= merged;
     numEdgesRow[v] -= merged;
     graph.getAdjMatrix()[u][v] = 0;
     graph.getAdjMatrix()[v][u] = 0;
     for (int i = 0; i < graph.size(); ++i) {
       graph.getAdjMatrix()[u][i] += graph.getAdjMatrix()[v][i];
+      numEdgesRow[u] += graph.getAdjMatrix()[v][i];
+      numEdgesRow[v] -= graph.getAdjMatrix()[v][i];
       graph.getAdjMatrix()[i][u] += graph.getAdjMatrix()[i][v];
-
+      
       graph.getAdjMatrix()[v][i] = 0;
       graph.getAdjMatrix()[i][v] = 0;
     }
-    return merged;
   }
 
   public Graph algorithm(Graph graph) {
