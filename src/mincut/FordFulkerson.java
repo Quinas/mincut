@@ -1,6 +1,7 @@
 package mincut;
 
 import graph.Graph;
+import graph.GraphUtils;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -56,15 +57,6 @@ public class FordFulkerson implements IMinCut {
     return maxFlow;
   }
 
-  private void dfs(Graph graph, int v, int color, int[] vis) {
-    vis[v] = color;
-    for (int i = 0; i < graph.size(); ++i) {
-      if (graph.getAdjMatrix()[v][i] > 0 && vis[i] == 0) {
-        dfs(graph, i, color, vis);
-      }
-    }
-  }
-
   @Override
   public int minCut(Graph graph) {
     int[] vis = new int[graph.size()];
@@ -72,7 +64,7 @@ public class FordFulkerson implements IMinCut {
 
     for (int i = 0; i < graph.size(); ++i) {
       if (vis[i] == 0) {
-        dfs(graph, i, color, vis);
+        GraphUtils.dfs(graph, i, color, vis);
         color++;
       }
     }
