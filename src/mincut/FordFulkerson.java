@@ -1,7 +1,6 @@
 package mincut;
 
 import graph.Graph;
-import graph.GraphUtils;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -59,22 +58,22 @@ public class FordFulkerson implements IMinCut {
 
   @Override
   public int minCut(Graph graph) {
-    int[] vis = new int[graph.size()];
-    int color = 1;
-
+    int s = 0;
+    boolean[] vis = new boolean[graph.size()];
     for (int i = 0; i < graph.size(); ++i) {
-      if (vis[i] == 0) {
-        GraphUtils.dfs(graph, i, color, vis);
-        color++;
+      for (int j = 0; j < graph.size(); ++j) {
+        if (graph.getAdjMatrix()[i][j] > 0) {
+          vis[i] = true;
+          vis[j] = true;
+          s = i;
+        }
       }
     }
 
     int ans = Integer.MAX_VALUE;
     for (int i = 0; i < graph.size(); ++i) {
-      for (int j = i + 1; j < graph.size(); ++j) {
-        if (vis[i] == vis[j]) {
-          ans = Math.min(ans, minCut(graph, i, j));
-        }
+      if (i != s && vis[i]) {
+        ans = Math.min(ans, minCut(graph, s, i));
       }
     }
     return ans;
