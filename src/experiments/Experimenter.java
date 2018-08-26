@@ -63,13 +63,9 @@ public class Experimenter {
             int n = 1 << i;
             System.out.printf("i: %d, n: %d\n", i, n);
 
-            System.out.println("qué shusha le colocamos al mínimo de p, tiene 1/n xd");
-            if (random.nextDouble() < 1) { return; }
-
-            // aquí se generan los p
             List<Double> probs = new ArrayList<>();
             for (int r=0; r<nProbs; r++) {
-                probs.add(RandomUtils.randContinuous(random, 1./n, 1));
+                probs.add(RandomUtils.randContinuous(random, 1 / Math.sqrt(n), 1));
             }
 
             List<Integer> tees = generateTees(random, n);

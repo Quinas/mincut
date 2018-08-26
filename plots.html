@@ -9,14 +9,14 @@
 </head>
 <body>
 <script>
-  var implementations = [
+  const implementations = [
     { name: 'Determinista (Dinic)' },
     { name: 'Karger' },
     { name: 'Una Mezcla'}
   ];
 
   function plot(data, layout) {
-    var div = $('<div>');
+    const div = $('<div>');
     Plotly.newPlot(div[0], data, layout);
     return div;
   }
@@ -24,17 +24,17 @@
   function renderTable(table) {
     return $('<table>').append(
       $('<thead>').append(
-        $('<th>').append(
+        $('<tr>').append(
           $.map(table.columns, function (column) {
-            return $('<td>').text(column);
+            return $('<th style="width: 8em">').text(column);
           })
         )
       ),
       $('<tbody>').append(
         $.map(table.rows, function (row) {
-          return $('<tr>').append(
+          return $('<tr style="width: 8em">').append(
             $.map(table.columns, function (column) {
-              return $('<td>').text(row[column]);
+              return $('<td style="text-align: center">').text(row[column]);
             })
           );
         })
@@ -43,9 +43,9 @@
   }
 
   function getParams(experiment) {
-    var allParams = ['n', 'p', 'k', 't'];
-    var params = [];
-    var text = [];
+    const allParams = ['n', 'p', 'k', 't'];
+    const params = [];
+    let text = [];
     $.each(allParams, function (i, param) {
       if (param in experiment) {
         params.push(param);
@@ -53,72 +53,77 @@
       }
     });
     text = text.join(', ');
-    return { params: params, text: text };
+    return { params, text };
   }
 
   function getMeasureText(measure) {
-    return measure.mean + '±' + measure.std;
+    return measure.mean.toFixed(2) + '±' + measure.std.toFixed(2);
   }
 
   function makeTable(results) {
+    const columns = [...getParams(results[0]).params,
+      'time', 'probError'];
     return {
-      columns: getParams(results[0]).params,
-      rows: $.map(results, function (experiment) {
-        var params = getParams(experiment).params;
-        return $.map(params, function (param) {
-          return getMeasureText(experiment[param]);
+      columns,
+      rows: _.map(results, function (experiment) {
+        return _.mapObject(experiment, (value, key) => {
+          if (key.length === 1) {
+            return key === 'n' ? value : value.toFixed(2);
+          }
+          return getMeasureText(value);
         });
       })
     };
   }
 
   function plotImplResults(implResults) {
-    return $('<div>').append(
-      $.map(implResults, function (experiment) {
-        return $('<div>').append(
-          $('<h3 class="section">').text(getParams(experiment).text),
-          // $('<pre>').text(JSON.stringify(experiment, null, '\t'))
-          renderTable(makeTable(implResults))
-        );
-      })
-    );
+    return renderTable(makeTable(implResults));
+    // return $('<div>').append(
+    //   $.map(implResults, function (experiment) {
+    //     return $('<div>').append(
+    //       $('<h3 class="section">').text(getParams(experiment).text),
+    //       // $('<pre>').text(JSON.stringify(experiment, null, '\t'))
+    //       renderTable(makeTable(implResults))
+    //     );
+    //   })
+    // );
   }
 
   $.getJSON('allResults.json', function (allResults) {
     $(function () {
       $('body').append(
         $.map(allResults, function (implResults, i) {
-          var impl = implementations[i];
+          const impl = implementations[i];
           return $('<div>').append(
             $('<h2 class="section">').text(impl.name),
             plotImplResults(implResults)
           );
         })
       );
-    });
 
-    var collapsedIcon = '▸ ', expandedIcon = '▾ ';
-    $('.section').each(function () {
-      var $title = $(this);
-      var $section = $title.next();
+      const collapsedIcon = '▸ ', expandedIcon = '▾ ';
+      $('.section').each(function () {
+        const $title = $(this);
+        const $section = $title.next();
 
-      var $triangle = $('<span>');
-      $triangle.text(expandedIcon);
-      $triangle.on('click', function () {
-        var currentIcon = $triangle.text();
-        if (currentIcon === expandedIcon) {
-          $section.slideUp('fast', function () {
-            $triangle.text(collapsedIcon);
-          });
-        }
-        else {
-          $section.slideDown('fast', function () {
-            $triangle.text(expandedIcon);
-          });
-        }
+        const $triangle = $('<span>');
+        $triangle.text(expandedIcon);
+        $triangle.on('click', function () {
+          const currentIcon = $triangle.text();
+          if (currentIcon === expandedIcon) {
+            $section.slideUp('fast', function () {
+              $triangle.text(collapsedIcon);
+            });
+          }
+          else {
+            $section.slideDown('fast', function () {
+              $triangle.text(expandedIcon);
+            });
+          }
+        });
+
+        $title.prepend($triangle);
       });
-
-      $title.prepend($triangle);
     });
   });
 </script>
