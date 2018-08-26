@@ -1,10 +1,7 @@
 package tests;
 
 import graph.Graph;
-import mincut.FordFulkerson;
-import mincut.IMinCut;
-import mincut.Karger;
-import mincut.MixedMinCut;
+import mincut.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +22,7 @@ public class IMinCutTest {
     graphs = new ArrayList<>();
     answer = new ArrayList<>();
 
-    mincut.add(new FordFulkerson());
+    mincut.add(new Deterministic());
     mincut.add(new Karger(100));
     mincut.add(new MixedMinCut(100, 5));
 
@@ -55,7 +52,7 @@ public class IMinCutTest {
     for (int i = 0; i < 100; ++i) {
       double r = 0.6;
       Graph graph = Graph.randomGraph(20, r);
-      int ans = new FordFulkerson().minCut(graph);
+      int ans = new Deterministic().minCut(graph);
       for (IMinCut alg : mincut) {
         assertEquals(ans, alg.minCut(graph));
       }

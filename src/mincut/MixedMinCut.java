@@ -6,12 +6,12 @@ public class MixedMinCut implements IMinCut {
 
   private int k;
   private Karger karger;
-  private FordFulkerson fordFulkerson;
+  private Deterministic deterministic;
 
   public MixedMinCut(int k, int minNodes) {
     this.k = k;
     karger = new Karger(k, minNodes);
-    fordFulkerson = new FordFulkerson();
+    deterministic = new Deterministic();
   }
 
   @Override
@@ -20,7 +20,7 @@ public class MixedMinCut implements IMinCut {
 
     for (int i = 0; i < k; ++i) {
       Graph nGraph = karger.algorithm(graph);
-      ans = Math.min(ans, fordFulkerson.minCut(nGraph));
+      ans = Math.min(ans, deterministic.minCut(nGraph));
     }
 
     return ans;

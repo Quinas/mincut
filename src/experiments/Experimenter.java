@@ -2,10 +2,7 @@ package experiments;
 
 import graph.Graph;
 import graph.GraphUtils;
-import mincut.FordFulkerson;
-import mincut.IMinCut;
-import mincut.Karger;
-import mincut.MixedMinCut;
+import mincut.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -19,8 +16,8 @@ public class Experimenter {
     private static int nProbs = 5;
     private static int nMeasures = 13;
     private static int maxK = 7;
-    private static int iStart = 3;
-    private static int iEnd = 5;
+    private static int iStart = 10;
+    private static int iEnd = 15;
 
     private static JSONObject doMeasures(IMinCut impl, Graph graph, int solution) {
         List<Double> timeMeasures = new ArrayList<>();
@@ -77,7 +74,7 @@ public class Experimenter {
 
                 Graph graph = GraphUtils.generate(n, p);
 
-                FordFulkerson maxFlow = new FordFulkerson();
+                IMinCut maxFlow = new Dinic();
                 int solution = maxFlow.minCut(graph);
                 JSONObject measures = doMeasures(maxFlow, graph, solution);
                 measures.put("n", n);

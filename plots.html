@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gráficos</title>
+  <script src="lib/jquery.min.js"></script>
+  <script src="lib/plotly-latest.min.js"></script>
+  <script src="lib/underscore-min.js"></script>
+</head>
+<body>
+<script>
+  var implementations = [
+    { name: 'Determinista (Dinic)' },
+    { name: 'Karger' },
+    { name: 'Una Mezcla'}
+  ];
+
+  function plot(data, layout) {
+    var div = $('<div>');
+    Plotly.newPlot(div[0], data, layout);
+    return div;
+  }
+
+  function renderTable(table) {
+    return $('<table>').append(
+      $('<thead>').append(
+        $('<th>').append(
+          $.map(table.columns, function (column) {
+            return $('<td>').text(column);
+          })
+        )
+      ),
+      $('<tbody>').append(
+        $.map(table.rows, function (row) {
+          return $('<tr>').append(
+            $.map(table.columns, function (column) {
+              return $('<td>').text(row[column]);
+            })
+          );
+        })
+      )
+    );
+  }
+
+  function getParamsText(experiment) {
+    var params = ['n', 'p', 'k', 't'];
+    var ans = [];
+    $.each(params, function (i, param) {
+      if (param in experiment) {
+        ans.push(param + ': ' + experiment[param]);
+      }
+    });
+    ans = ans.join(', ');
+    return ans;
+  }
+
+  function getMeasureText(measure) {
+    return measure.mean + '±' + measure.std;
+  }
+
+  function makeTable(maxFlowResults) {
+    var ens = _.groupBy(maxFlowResults, 'n');
+    var pees = _.groupBy(maxFlowResults, 'p');
+    var ps = $.map(pees, function (pee) { return pee.p; });
+    var table = {
+      columns: $.map(ps, function (p) { return 'p: ' + p; }),
+      rows: $.map(ens, function (en) {
+        var results = _.indexBy(en, 'p');
+        return $.map(ps, function (p) {
+          return getMeasureText(results[p]);
+        });
+      })
+    };
+    debugger;
+    return table;
+  }
+
+  function plotImplResults(implResults) {
+    return $('<div>').append(
+      $.map(implResults, function (experiment) {
+        return $('<div>').append(
+          $('<h3 class="section">').text(getParamsText(experiment)),
+          // $('<pre>').text(JSON.stringify(experiment, null, '\t'))
+          renderTable(makeTable(implResults))
+        );
+      })
+    );
+  }
+
+  $.getJSON('allResults.json', function (allResults) {
+    $(function () {
+      $('body').append(
+        $.map(allResults, function (implResults, i) {
+          var impl = implementations[i];
+          return $('<div>').append(
+            $('<h2 class="section">').text(impl.name),
+            plotImplResults(implResults)
+          );
+        })
+      );
+    });
+
+    var collapsedIcon = '▸ ', expandedIcon = '▾ ';
+    $('.section').each(function () {
+      var $title = $(this);
+      var $section = $title.next();
+
+      var $triangle = $('<span>');
+      $triangle.text(expandedIcon);
+      $triangle.on('click', function () {
+        var currentIcon = $triangle.text();
+        if (currentIcon === expandedIcon) {
+          $section.slideUp('fast', function () {
+            $triangle.text(collapsedIcon);
+          });
+        }
+        else {
+          $section.slideDown('fast', function () {
+            $triangle.text(expandedIcon);
+          });
+        }
+      });
+
+      $title.prepend($triangle);
+    });
+  });
+</script>
+</body>
+</html>

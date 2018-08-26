@@ -70,8 +70,11 @@ public class FordFulkerson implements IMinCut {
       }
     }
 
+    System.out.println("yey");
+
     int ans = Integer.MAX_VALUE;
     for (int i = 0; i < graph.size(); ++i) {
+      System.out.printf("s: %d, t: %d\n", s, i);
       if (i != s && vis[i]) {
         ans = Math.min(ans, minCut(graph, s, i));
       }
