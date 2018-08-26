@@ -42,44 +42,41 @@
     );
   }
 
-  function getParamsText(experiment) {
-    var params = ['n', 'p', 'k', 't'];
-    var ans = [];
-    $.each(params, function (i, param) {
+  function getParams(experiment) {
+    var allParams = ['n', 'p', 'k', 't'];
+    var params = [];
+    var text = [];
+    $.each(allParams, function (i, param) {
       if (param in experiment) {
-        ans.push(param + ': ' + experiment[param]);
+        params.push(param);
+        text.push(param + ': ' + experiment[param]);
       }
     });
-    ans = ans.join(', ');
-    return ans;
+    text = text.join(', ');
+    return { params: params, text: text };
   }
 
   function getMeasureText(measure) {
     return measure.mean + '±' + measure.std;
   }
 
-  function makeTable(maxFlowResults) {
-    var ens = _.groupBy(maxFlowResults, 'n');
-    var pees = _.groupBy(maxFlowResults, 'p');
-    var ps = $.map(pees, function (pee) { return pee.p; });
-    var table = {
-      columns: $.map(ps, function (p) { return 'p: ' + p; }),
-      rows: $.map(ens, function (en) {
-        var results = _.indexBy(en, 'p');
-        return $.map(ps, function (p) {
-          return getMeasureText(results[p]);
+  function makeTable(results) {
+    return {
+      columns: getParams(results[0]).params,
+      rows: $.map(results, function (experiment) {
+        var params = getParams(experiment).params;
+        return $.map(params, function (param) {
+          return getMeasureText(experiment[param]);
         });
       })
     };
-    debugger;
-    return table;
   }
 
   function plotImplResults(implResults) {
     return $('<div>').append(
       $.map(implResults, function (experiment) {
         return $('<div>').append(
-          $('<h3 class="section">').text(getParamsText(experiment)),
+          $('<h3 class="section">').text(getParams(experiment).text),
           // $('<pre>').text(JSON.stringify(experiment, null, '\t'))
           renderTable(makeTable(implResults))
         );

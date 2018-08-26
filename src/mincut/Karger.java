@@ -2,6 +2,7 @@ package mincut;
 
 import graph.Edge;
 import graph.Graph;
+import util.Lambda;
 
 import java.util.Random;
 
@@ -9,20 +10,22 @@ public class Karger implements IMinCut {
 
   private int k;
   private int minNodes;
+  private Lambda onPartialResult;
 
-  public Karger(int k, int minNodes) {
+  public Karger(int k, int minNodes, Lambda onPartialResult) {
     this.k = k;
     this.minNodes = minNodes;
+    this.onPartialResult = onPartialResult;
   }
 
-  public Karger(int k) {
-    this(k, 2);
+  public Karger(int k, Lambda onPartialResult) {
+    this(k, 2, onPartialResult);
   }
 
   @Override
   public int minCut(Graph graph) {
     int ans = Integer.MAX_VALUE;
-    for (int i = 0; i < k; ++i) {
+    for (int i = 1; i <= k; ++i) {
       Graph nGraph = algorithm(graph);
 
       int cur = 0;
@@ -34,6 +37,9 @@ public class Karger implements IMinCut {
       }
 
       ans = Math.min(ans, cur);
+      if (onPartialResult != null) {
+        onPartialResult.apply(new PartialResult(i, ans));
+      }
     }
     return ans;
   }

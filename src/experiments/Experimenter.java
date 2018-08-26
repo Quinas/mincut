@@ -9,6 +9,7 @@ import org.json.simple.JSONObject;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -16,8 +17,8 @@ public class Experimenter {
     private static int nProbs = 5;
     private static int nMeasures = 13;
     private static int maxK = 7;
-    private static int iStart = 10;
-    private static int iEnd = 15;
+    private static int iStart = 5;
+    private static int iEnd = 10;
 
     private static JSONObject doMeasures(IMinCut impl, Graph graph, int solution) {
         List<Double> timeMeasures = new ArrayList<>();
@@ -27,7 +28,7 @@ public class Experimenter {
             System.gc();
             Timer timer = new Timer();
             int answer = impl.minCut(graph);
-            double time = timer.ellapsed();
+            double time = timer.elapsed();
             double probError = answer == solution ? 0 : 1;
 
             timeMeasures.add(time);
@@ -54,11 +55,6 @@ public class Experimenter {
     public static void main(String[] args) {
         Random random = new Random();
 
-        List<Double> probs = new ArrayList<>();
-        for (int i=0; i<nProbs; i++) {
-            probs.add(RandomUtils.randContinuous(random, 0.5, 1));
-        }
-
         JSONArray maxFlowResults = new JSONArray();
         JSONArray kargerResults = new JSONArray();
         JSONArray mixedResults = new JSONArray();
@@ -66,6 +62,15 @@ public class Experimenter {
         for (int i=iStart; i<=iEnd; i++) {
             int n = 1 << i;
             System.out.printf("i: %d, n: %d\n", i, n);
+
+            System.out.println("qué shusha le colocamos al mínimo de p, tiene 1/n xd");
+            if (random.nextDouble() < 1) { return; }
+
+            // aquí se generan los p
+            List<Double> probs = new ArrayList<>();
+            for (int r=0; r<nProbs; r++) {
+                probs.add(RandomUtils.randContinuous(random, 1./n, 1));
+            }
 
             List<Integer> tees = generateTees(random, n);
 
@@ -81,24 +86,48 @@ public class Experimenter {
                 measures.put("p", p);
                 maxFlowResults.add(measures);
 
+                Double timeMeasures[][] = new Double[maxK + 1][nMeasures];
+                Double errMeasures[][] = new Double[maxK + 1][nMeasures];
+                for (int m=0; m<nMeasures; m++) {
+                    System.out.printf("measure %d/%d\n", m+1, nMeasures);
+
+                    int finalM = m;
+                    Timer timer = new Timer();
+                    IMinCut karger = new Karger(maxK, o -> onPartialResult(solution, timeMeasures, errMeasures, finalM,
+                            timer, (PartialResult) o));
+                    System.gc();
+                    karger.minCut(graph);
+                }
                 for (int k=1; k<=maxK; k++) {
                     System.out.printf("k: %d\n", k);
 
-                    Karger karger = new Karger(k);
-                    measures = doMeasures(karger, graph, solution);
-                    measures.put("n", n);
-                    measures.put("p", p);
-                    measures.put("k", k);
+                    Measure time = new Measure(Arrays.asList(timeMeasures[k]));
+                    Measure probError = new Measure(Arrays.asList(errMeasures[k]));
+
+                    measures = makeMeasure(time, probError, n, p, k);
                     kargerResults.add(measures);
+                }
 
-                    for (int t : tees) {
-                        System.out.printf("t: %d\n", t);
+                for (int t : tees) {
+                    System.out.printf("t: %d\n", t);
 
-                        MixedMinCut mixed = new MixedMinCut(k, t);
-                        measures = doMeasures(mixed, graph, solution);
-                        measures.put("n", n);
-                        measures.put("p", p);
-                        measures.put("k", k);
+                    for (int m=0; m<nMeasures; m++) {
+                        System.out.printf("measure %d/%d\n", m+1, nMeasures);
+
+                        int finalM = m;
+                        Timer timer = new Timer();
+                        IMinCut mixed = new MixedMinCut(maxK, t, o -> onPartialResult(solution, timeMeasures,
+                                errMeasures, finalM, timer, (PartialResult) o));
+                        System.gc();
+                        mixed.minCut(graph);
+                    }
+                    for (int k=1; k<=maxK; k++) {
+                        System.out.printf("k: %d\n", k);
+
+                        Measure time = new Measure(Arrays.asList(timeMeasures[k]));
+                        Measure probError = new Measure(Arrays.asList(errMeasures[k]));
+
+                        measures = makeMeasure(time, probError, n, p, k);
                         measures.put("t", t);
                         mixedResults.add(measures);
                     }
@@ -120,5 +149,27 @@ public class Experimenter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static JSONObject makeMeasure(Measure time, Measure probError, int n, double p, int k) {
+        JSONObject measures;
+        measures = new JSONObject();
+        measures.put("time", time.toJson());
+        measures.put("probError", probError.toJson());
+        measures.put("n", n);
+        measures.put("p", p);
+        measures.put("k", k);
+        return measures;
+    }
+
+    private static Object onPartialResult(int solution, Double[][] timeMeasures, Double[][] errMeasures,
+                                          int finalM, Timer timer, PartialResult o) {
+        int k = o.k;
+        int cut = o.cut;
+
+        timeMeasures[k][finalM] = timer.elapsed();
+        errMeasures[k][finalM] = cut == solution ? 0. : 1.;
+
+        return null;
     }
 }

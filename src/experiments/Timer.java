@@ -7,7 +7,7 @@ public class Timer {
         startTime = System.nanoTime();
     }
 
-    double ellapsed() {
+    double elapsed() {
         long endTime = System.nanoTime();
         long durationNano = (endTime - startTime);
         return (double) durationNano * 1e-9;

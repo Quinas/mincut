@@ -23,8 +23,8 @@ public class IMinCutTest {
     answer = new ArrayList<>();
 
     mincut.add(new Deterministic());
-    mincut.add(new Karger(100));
-    mincut.add(new MixedMinCut(100, 5));
+    mincut.add(new Karger(100, null));
+    mincut.add(new MixedMinCut(100, 5, null));
 
     graphs.add(new Graph(2));
     graphs.get(0).addEdge(0, 1);
