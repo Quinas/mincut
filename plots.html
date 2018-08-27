@@ -100,6 +100,17 @@
     );
   }
 
+  function updateSelect($select, param, results, id) {
+    const byParam = _.groupBy(results, param);
+    $select.empty();
+    $select.append(
+      $.map(Object.keys(byParam), function (value) {
+        return $(`<option value="${value}">`)
+          .html(formatNumber(+value));
+      })
+    )
+  }
+
   let gid = 0;
   let fullData = {};
   function makeControlledPlot(results) {
@@ -139,7 +150,7 @@
     const $select = $('select').filter(filterId);
     const $plotDiv = $('div').filter(filterId);
 
-    function update() {
+    function update(shouldUpdateT) {
       let params = {}, axises = {};
       $select.each(function () {
         const param = $(this).data('param');
@@ -180,21 +191,26 @@
         plot(data, layout)
       );
 
-      $select.each(function () {
-        const param = $(this).data('param');
-        if (param === 't') {
-          const matchesWithN = fullData[id].filter(result =>
-            result.n === params.n);
+      if (shouldUpdateT) {
+        $select.each(function () {
+          const param = $(this).data('param');
+          if (param === 't') {
+            const selectedN = +$select.filter(function () {
+              return $(this).data('param') === 'n';
+            }).val();
+            const matchesWithN = fullData[id].filter(result =>
+              result.n === selectedN);
 
-          $(this).parent().replaceWith(
-            makeSelect(param, matchesWithN, id));
-        }
-      })
+            updateSelect($(this), param, matchesWithN, id);
+            update(false);
+          }
+        });
+      }
     }
 
-    update();
+    update(true);
     $select.change(function () {
-      update();
+      update($(this).data('param') === 'n');
     });
   }
 
