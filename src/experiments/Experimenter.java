@@ -16,7 +16,7 @@ import java.util.Random;
 public class Experimenter {
     private static int nProbs = 5;
     private static int nMeasures = 13;
-    private static int maxK = 7;
+//    private static int maxK = 7;
     private static int iStart = 5;
     private static int iEnd = 10;
 
@@ -59,14 +59,23 @@ public class Experimenter {
         JSONArray kargerResults = new JSONArray();
         JSONArray mixedResults = new JSONArray();
 
+        List<Double> probs = new ArrayList<>();
+        probs.add(0.1);
+        probs.add(0.3);
+        probs.add(0.5);
+        probs.add(0.7);
+        probs.add(0.9);
+
         for (int i=iStart; i<=iEnd; i++) {
             int n = 1 << i;
             System.out.printf("i: %d, n: %d\n", i, n);
+//            int maxK = n*n / 2;
+            int maxK = 7;
 
-            List<Double> probs = new ArrayList<>();
-            for (int r=0; r<nProbs; r++) {
-                probs.add(RandomUtils.randContinuous(random, 1 / Math.sqrt(n), 1));
-            }
+//            List<Double> probs = new ArrayList<>();
+//            for (int r=0; r<nProbs; r++) {
+//                probs.add(RandomUtils.randContinuous(random, 1 / Math.sqrt(n), 1));
+//            }
 
             List<Integer> tees = generateTees(random, n);
 
@@ -95,8 +104,6 @@ public class Experimenter {
                     karger.minCut(graph);
                 }
                 for (int k=1; k<=maxK; k++) {
-                    System.out.printf("k: %d\n", k);
-
                     Measure time = new Measure(Arrays.asList(timeMeasures[k]));
                     Measure probError = new Measure(Arrays.asList(errMeasures[k]));
 
@@ -118,8 +125,6 @@ public class Experimenter {
                         mixed.minCut(graph);
                     }
                     for (int k=1; k<=maxK; k++) {
-                        System.out.printf("k: %d\n", k);
-
                         Measure time = new Measure(Arrays.asList(timeMeasures[k]));
                         Measure probError = new Measure(Arrays.asList(errMeasures[k]));
 
@@ -163,6 +168,7 @@ public class Experimenter {
         int k = o.k;
         int cut = o.cut;
 
+        System.out.printf("k: %d\n", k);
         timeMeasures[k][finalM] = timer.elapsed();
         errMeasures[k][finalM] = cut == solution ? 0. : 1.;
 

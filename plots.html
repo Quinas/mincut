@@ -22,22 +22,25 @@
   }
 
   function renderTable(table) {
-    return $('<table>').append(
-      $('<thead>').append(
-        $('<tr>').append(
-          $.map(table.columns, function (column) {
-            return $('<th style="width: 8em">').text(column);
+    return $('<div>').append(
+      $('<h3 class="section">').text('Tabla'),
+      $('<table>').append(
+        $('<thead>').append(
+          $('<tr>').append(
+            $.map(table.columns, function (column) {
+              return $('<th style="padding: 0 2em">').text(column);
+            })
+          )
+        ),
+        $('<tbody>').append(
+          $.map(table.rows, function (row) {
+            return $('<tr style="padding: 0 2em">').append(
+              $.map(table.columns, function (column) {
+                return $('<td style="text-align: center">').html(row[column]);
+              })
+            );
           })
         )
-      ),
-      $('<tbody>').append(
-        $.map(table.rows, function (row) {
-          return $('<tr style="width: 8em">').append(
-            $.map(table.columns, function (column) {
-              return $('<td style="text-align: center">').text(row[column]);
-            })
-          );
-        })
       )
     );
   }
@@ -56,8 +59,17 @@
     return { params, text };
   }
 
+  function formatNumber(x) {
+    if (x === (x | 0)) { return x; }
+    const [before, after] = x.toExponential(2).split('e');
+    if (+after < -2) return `${before}×10<sup>${after}</sup>`;
+    return x.toFixed(2);
+  }
+
   function getMeasureText(measure) {
-    return measure.mean.toFixed(2) + '±' + measure.std.toFixed(2);
+    return formatNumber(measure.mean) +
+      ' <span style="color: gray">± ' +
+      formatNumber(measure.std) + '</span>';
   }
 
   function makeTable(results) {
@@ -67,26 +79,127 @@
       columns,
       rows: _.map(results, function (experiment) {
         return _.mapObject(experiment, (value, key) => {
-          if (key.length === 1) {
-            return key === 'n' ? value : value.toFixed(2);
-          }
-          return getMeasureText(value);
+          if (key.length === 1) { return formatNumber(value); }
+          if (key === 'time') { return getMeasureText(value); }
+          return '~' + formatNumber(value.mean);
         });
       })
     };
   }
 
+  function makeSelect(param, results, id) {
+    const byParam = _.groupBy(results, param);
+    return $('<div style="padding-right: 2em">').append(
+      $('<span>').text(`${param}: `),
+      $(`<select data-id="${id}" data-param="${param}">`).append(
+        $.map(Object.keys(byParam), function (value) {
+          return $(`<option value="${value}">`)
+            .html(formatNumber(+value));
+        })
+      )
+    );
+  }
+
+  let gid = 0;
+  let fullData = {};
+  function makeControlledPlot(results) {
+    const id = (gid++).toString();
+    const anExperiment = results[0];
+    const params = getParams(anExperiment).params;
+    fullData[id] = results;
+
+    return $('<div>').append(
+      $('<div style="display: flex; flex-flow: row wrap;">').append(
+        $.map(params, param => makeSelect(param, results, id)),
+        $('<div style="padding-right: 2em">').append(
+          $('<span>').text('Eje X: '),
+          $(`<select data-id="${id}" data-axis="x">`).append(
+            $.map(params, function (param) {
+              return $(`<option value="${param}">`).html(param);
+            })
+          )
+        ),
+        $('<div>').append(
+          $('<span>').text('Eje Y: '),
+          $(`<select data-id="${id}" data-axis="y">`).append(
+            $('<option value="time">').html('time'),
+            $('<option value="probError">').html('probError')
+          )
+        )
+      ),
+      $(`<div data-id="${id}">`)
+    );
+  }
+
+  const eps = 1e-8;
+  function controlPlot(id) {
+    const filterId = function () {
+      return $(this).data('id') === id;
+    };
+    const $select = $('select').filter(filterId);
+    const $plotDiv = $('div').filter(filterId);
+
+    function update() {
+      let params = {}, axises = {};
+      $select.each(function () {
+        const param = $(this).data('param');
+        if (param) { params[param] = +$(this).val(); }
+
+        const axis = $(this).data('axis');
+        if (axis) { axises[axis] = $(this).val(); }
+      });
+
+      delete params[axises.x];
+      const sortedData = fullData[id].sort((a, b) => {
+        return a[axises.x] - b[axises.x];
+      });
+      const filteredData = sortedData.filter(result =>
+        _.every(params, (value, param) =>
+          Math.abs(result[param] - value) <= eps
+        )
+      );
+
+      const data = [{
+        x: filteredData.map(result => result[axises.x]),
+        y: filteredData.map(result => result[axises.y].mean),
+        error_y: {
+          type: 'data',
+          array: filteredData.map(result => result[axises.y].std),
+          visible: true
+        },
+        type: 'scatter'
+      }];
+      const layout = {
+        title: 'Gráfico',
+        xaxis: { title: axises.x },
+        yaxis: { title: axises.y }
+      };
+
+      $plotDiv.empty();
+      $plotDiv.append(
+        plot(data, layout)
+      );
+
+      $select.each(function () {
+        const param = $(this).data('param');
+        if (param === 't') {
+          const matchesWithN = fullData[id].filter(result =>
+            result.n === params.n);
+
+          $(this).parent().replaceWith(
+            makeSelect(param, matchesWithN, id));
+        }
+      })
+    }
+
+    update();
+    $select.change(function () {
+      update();
+    });
+  }
+
   function plotImplResults(implResults) {
     return renderTable(makeTable(implResults));
-    // return $('<div>').append(
-    //   $.map(implResults, function (experiment) {
-    //     return $('<div>').append(
-    //       $('<h3 class="section">').text(getParams(experiment).text),
-    //       // $('<pre>').text(JSON.stringify(experiment, null, '\t'))
-    //       renderTable(makeTable(implResults))
-    //     );
-    //   })
-    // );
   }
 
   $.getJSON('allResults.json', function (allResults) {
@@ -96,7 +209,10 @@
           const impl = implementations[i];
           return $('<div>').append(
             $('<h2 class="section">').text(impl.name),
-            plotImplResults(implResults)
+            $('<div>').append(
+              makeControlledPlot(implResults),
+              plotImplResults(implResults)
+            )
           );
         })
       );
@@ -124,6 +240,10 @@
 
         $title.prepend($triangle);
       });
+
+      for (let id=0; id<gid; id++) {
+        controlPlot(id);
+      }
     });
   });
 </script>

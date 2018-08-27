@@ -19,9 +19,28 @@ public class Dinic implements IMinCut {
                 }
             }
         }
+
+        boolean[] hasNeighbors = new boolean[nNodes];
+        for (int u=0; u<nNodes; u++) {
+            for (int v=u+1; v<nNodes; v++) {
+                if (graph.getAdjMatrix()[u][v] > 0) {
+                    hasNeighbors[u] = true;
+                    break;
+                }
+            }
+        }
+        int s = -1;
+        for (int u=0; u<nNodes; u++) {
+            if (hasNeighbors[u]) {
+                s = u;
+                break;
+            }
+        }
+
         int ans = Integer.MAX_VALUE;
-        int s = 0;
-        for (int t=1; t<nNodes; t++) {
+        for (int t=0; t<nNodes; t++) {
+            if (t == s || !hasNeighbors[t]) { continue; }
+
             int cand = MaxFlowDinic.maxFlow(g, s, t);
             ans = min(ans, cand);
         }
